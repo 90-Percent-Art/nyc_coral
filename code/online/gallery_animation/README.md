@@ -1,0 +1,1 @@
+This folder contains front end code for the gallery flood animation
