@@ -128,6 +128,7 @@ def generate_output_points(people_per_point, nyc_cbg_gj, sea_level_polygon_dict,
     for feature in nyc_cbg_gj['features']:
         
         cbg = feature['properties']['CensusBlockGroup']
+        county = feature['properties']['County']
         poly = Polygon((feature['geometry']['coordinates'][0][0]))
         demo_dat = cbg_demo_dict[cbg]
 
@@ -141,7 +142,7 @@ def generate_output_points(people_per_point, nyc_cbg_gj, sea_level_polygon_dict,
 
             feature_collection_points.append(Feature(
                 geometry = GeoPoint((p.x, p.y)),
-                properties={**demo_props, **flood_props}
+                properties={**demo_props, **flood_props, 'county': county, 'cbg': cbg}
             ))
 
             if pts % 1000 == 0:
@@ -163,11 +164,13 @@ if __name__ == '__main__':
         'census_block_group': str})
 
     sea_level_2020_100_clean = convert_sea_geojson_to_polygons(load_file_from_path(
-        "../../data/raw/sea_level_geoms/sea_level_rise_2020s_100_year.geojson", 'geojson'))
+        "../../data/raw/sea_level_geoms/clean/sea_level_rise_2020s_100.geojson", 'geojson'))
     sea_level_2020_500_clean = convert_sea_geojson_to_polygons(load_file_from_path(
-        "../../data/raw/sea_level_geoms/sea_level_rise_2020s_500_year.geojson", 'geojson'))
+        "../../data/raw/sea_level_geoms/clean/sea_level_rise_2020s_500.geojson", 'geojson'))
+    sea_level_2050_100_clean = convert_sea_geojson_to_polygons(load_file_from_path(
+        "../../data/raw/sea_level_geoms/clean/sea_level_rise_2050s_100.geojson", 'geojson'))
     sea_level_2050_500_clean = convert_sea_geojson_to_polygons(load_file_from_path(
-        "../../data/raw/sea_level_geoms/sea_level_rise_2050s_500_year.geojson", 'geojson'))
+        "../../data/raw/sea_level_geoms/clean/sea_level_rise_2050s_500.geojson", 'geojson'))
 
     logging.info('Loaded the Data')
 
@@ -182,7 +185,8 @@ if __name__ == '__main__':
         nyc_cbg_gj=nyc_cbg_gj,
         sea_level_polygon_dict={'flood_2020_100':sea_level_2020_100_clean, 
                                 'flood_2020_500':sea_level_2020_500_clean, 
-                                'flood_2050_500': sea_level_2050_500_clean},
+                                'flood_2050_100':sea_level_2050_100_clean,
+                                'flood_2050_500':sea_level_2050_500_clean},
         cbg_demo_dict=cbg_demo_dict
     )
     logging.info('Generated the output feature collection')
