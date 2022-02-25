@@ -4,10 +4,13 @@
 import geojson
 import json
 import sys 
+import time
+import math
 import timeit
 import logging
 from random import gauss
 from scipy.spatial import KDTree
+from staticLogics import fancyEvanMaker
 
 class Point:
     def __init__(self, xy, bounds, properties):
@@ -21,7 +24,7 @@ class Point:
 
     def update(self, magnitude, ydrift):
         self.shock(magnitude, ydrift)
-        self.clamp(self.bounds[0], self.bounds[1],
+        self.wrap(self.bounds[0], self.bounds[1],
                    self.bounds[2], self.bounds[3])
 
     def shock(self, magnitude, ydrift):
@@ -36,6 +39,17 @@ class Point:
     def clamp(self, minX, maxX, minY, maxY):
         self.x = min(max(self.x, minX), maxX)
         self.y = min(max(self.y, minY), maxY)
+    
+    def wrap(self, minX, maxX, minY, maxY):
+        '''If the point is outside the bounds, wrap it around to the opposite edge'''
+        if self.x < minX:
+            self.x = maxX
+        elif self.x > maxX:
+            self.x = minX
+        if self.y < minY:
+            self.y = maxY
+        elif self.y > maxY:
+            self.y = minY
 
     def __str__(self):
         return 'Point({0}, {1})'.format(self.x, self.y)
@@ -43,17 +57,22 @@ class Point:
 
 class CoralSimulation:
 
-    def __init__(self, pointFeatureList, shocksd=0.003, radius=0.002, sea_floor_level=40.48, bounds=[-74.27, -73.6, 40.48, 40.94], maxIter=30000):
-
-        # set up logging to standard out
-        logging.basicConfig(level=logging.INFO, stream=sys.stdout, format='%(asctime)s %(message)s')
+    def __init__(
+        self, pointFeatureList, staticConditionLogic, 
+        shocksd=0.003, ydrift = 0.003/6, radius=0.002, 
+        sea_floor_level=40.48, bounds=[-74.27, -73.6, 40.48, 40.94], 
+        maxIter=30000, allowedUnconvergedPoints=100
+    ):
 
         # simulation parameters
         self.shocksd = shocksd
+        self.ydrift = ydrift
         self.radius = radius
         self.sea_floor_level = sea_floor_level
         self.bounds = bounds
         self.maxIter = maxIter
+        self.allowedUnconvergedPoints = allowedUnconvergedPoints
+        self.staticCondtionLogic = staticConditionLogic
 
         # Initialization 
         self.points = []
@@ -61,7 +80,6 @@ class CoralSimulation:
 
         # Add points and update static
         self.addNewActivePointsFromFeatureList(pointFeatureList)
-        self.updateStatic()
         logging.info("Initialized all the simulation data")
 
     def addNewActivePointsFromFeatureList(self, pointFeatureList):
@@ -73,6 +91,7 @@ class CoralSimulation:
         self.points = self.points + \
             [Point(x['geometry']['coordinates'], self.bounds, x['properties'])
              for x in pointFeatureList]
+        self.updateStatic()
 
     def updateStatic(self):
         self.active_points = [
@@ -83,11 +102,11 @@ class CoralSimulation:
             self.tree = KDTree([(p.x, p.y) for p in self.static_points])
 
     def pointMeetsStaticConditions(self, point):
-        return point.y <= self.sea_floor_level and point.x < -73.98 and point.x > -74.02
+        return self.staticCondtionLogic(point)
 
     def iterate(self):
         for point in self.active_points:
-            point.update(self.shocksd, self.shocksd/6)
+            point.update(self.shocksd, self.ydrift)
             if self.pointMeetsStaticConditions(point):
                 point.makeStatic()
             if self.tree:
@@ -109,8 +128,9 @@ class CoralSimulation:
             self.iterate()
             iters += 1
             curr = timeit.default_timer()
-            logging.info("{} {} {} {} {}".format(round(curr-start), iters, len(self.active_points),
-                         len(self.static_points), self.tree.size if self.tree else 0))
+            if iters % 200 == 0:
+                logging.info("{} {} {} {} {}".format(round(curr-start), iters, len(self.active_points),
+                            len(self.static_points), self.tree.size if self.tree else 0))
 
     def toJSON(self, path):
         output = []
@@ -133,11 +153,40 @@ class CoralSimulation:
 
 if __name__ == '__main__':
 
+    logging.basicConfig(level=logging.INFO, stream=sys.stdout,
+                        format='%(asctime)s %(message)s')
+
     GEOJSON_PATH = '../../../data/processed/processed_nyc_data_points_200_20220224-154147.geojson'
     rawdata = geojson.load(open(GEOJSON_PATH))
 
-    # Run the simulation with all the 2050-500 flooded points. 
-    sim = CoralSimulation([x for x in rawdata['features']
-                          if x['properties']['flood_2050_500']['in_flood']])
-    sim.run()
-    results_2020_100 = sim.toMultiPointFeatureCollection("./coral_testing_app/public/coral_test.geojson")  # save the results
+    ever_2050_500_flooded = [x for x in rawdata['features']
+                             if x['properties']['flood_2050_500']['in_flood']]
+
+    shockssds = [0.0001, 0.003, 0.005, 0.01, 0.02, 0.04, 0.08]
+    ydrifts = [0, 0.0001, 0.0002, 0.003, 0.005, 0.01, 0.02, 0.04, 0.08]
+    radii = [0.0005, 0.001, 0.002, 0.004, 0.008]
+    everySeeded = [1,5,10,20,25,50,100,200,500]
+    nIntervals = 500
+
+    everyNSeeded = 100
+    bounds = [-74.27, -73.6]
+
+    for shocksd in shockssds:
+        for ydrift in ydrifts:
+            for radius in radii:
+                for everyNSeeded in everySeeded:
+                    nIntervals = 500
+                    bounds = [-74.27, -73.6]
+                    maxIter = 30000
+                    sea_floor_level = 40.48
+                    allowedUnconvergedPoints=100
+
+                    fancyEvan = fancyEvanMaker(
+                        nIntervals, everyNSeeded, bounds)
+
+                    logging.info("Starting simulation with {shock}_{drift}_{radius}_{everySeed}".format(
+                        shock=shocksd, drift=ydrift, radius=radius, everySeed=everyNSeeded))
+                    sim = CoralSimulation(ever_2050_500_flooded, fancyEvan)
+                    sim.run()
+                    sim.toMultiPointFeatureCollection(
+                        "./coral_testing_app/public/coral_tests/coral_{shock}_{drift}_{radius}_{everySeed}_{time}.geojson".format(shock=shocksd, drift=ydrift, radius=radius, everySeed=everyNSeeded, time=time.strftime("%Y%m%d-%H%M%S")))  # save the results
