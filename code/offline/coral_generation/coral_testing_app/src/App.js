@@ -5,7 +5,11 @@ import { ScatterplotLayer } from "@deck.gl/layers";
 import React from "react";
 import { useState, useEffect } from 'react';
 
-function App() {
+function getRandom(min, max) {
+  return Math.random() * (max - min) + min;
+}
+
+function App({coral_url}) {
 
   const [data, setData] = useState([]);
   
@@ -22,16 +26,23 @@ function App() {
       });
   };
   useEffect(() => {
-    getData("coral_test.geojson", setData);
+    getData(coral_url, setData);
   }, []);
 
   const INITIAL_VIEW_STATE = {
-    longitude: -74,
-    latitude: 40.7,
-    zoom: 11,
+    altitude: 1.5,
+    bearing: 0,
+    height: 1107,
+    latitude: 40.75813025358964,
+    longitude: -74.01063177933962,
+    maxPitch: 60,
     maxZoom: 16,
+    minPitch: 0,
+    minZoom: 0,
     pitch: 0,
-    bearing: 0
+    width: 1065,
+    zoom: 10.033299478365162
+
   };
 
   const mapboxToken = process.env.REACT_APP_MAPBOX_ACCESS_TOKEN;
@@ -41,12 +52,12 @@ function App() {
       id: "scatter-plot",
       data: data,
       radiusScale: 80,
-      radiusMinPixels: 0.25,
+      radiusMinPixels: 0.01,
       getPosition: (d) => {
         return d.geometry.coordinates[1];
       },
-      getRadius: 0.7,
-      getFillColor: [0, 0, 20, 80],
+      getRadius: 1,
+      getFillColor: d => [255, 100 * getRandom(0.5, 1.6), 80, 200],
     }),
   ];
 
@@ -55,8 +66,7 @@ function App() {
     <DeckGL
       layers={layers}
       initialViewState={INITIAL_VIEW_STATE}
-      controller={true}
-    >
+      controller={true}>
       <Map
         reuseMaps={true}
         mapboxApiAccessToken={mapboxToken}
