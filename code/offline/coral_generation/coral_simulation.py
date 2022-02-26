@@ -10,7 +10,7 @@ import timeit
 import logging
 from random import gauss
 from scipy.spatial import KDTree
-from staticLogics import fancyEvanMaker
+from coral_static_logics import fancyEvanMaker
 
 class Point:
     def __init__(self, xy, bounds, properties):
@@ -149,44 +149,3 @@ class CoralSimulation:
         fc = geojson.FeatureCollection(output)
         with open(path, 'w') as f:
             geojson.dump(fc, f)
-
-
-if __name__ == '__main__':
-
-    logging.basicConfig(level=logging.INFO, stream=sys.stdout,
-                        format='%(asctime)s %(message)s')
-
-    GEOJSON_PATH = '../../../data/processed/processed_nyc_data_points_200_20220224-154147.geojson'
-    rawdata = geojson.load(open(GEOJSON_PATH))
-
-    ever_2050_500_flooded = [x for x in rawdata['features']
-                             if x['properties']['flood_2050_500']['in_flood']]
-
-    shockssds = [0.0001, 0.003, 0.005, 0.01, 0.02, 0.04, 0.08]
-    ydrifts = [0, 0.0001, 0.0002, 0.003, 0.005, 0.01, 0.02, 0.04, 0.08]
-    radii = [0.0005, 0.001, 0.002, 0.004, 0.008]
-    everySeeded = [1,5,10,20,25,50,100,200,500]
-    nIntervals = 500
-
-    everyNSeeded = 100
-    bounds = [-74.27, -73.6]
-
-    for shocksd in shockssds:
-        for ydrift in ydrifts:
-            for radius in radii:
-                for everyNSeeded in everySeeded:
-                    nIntervals = 500
-                    bounds = [-74.27, -73.6]
-                    maxIter = 30000
-                    sea_floor_level = 40.48
-                    allowedUnconvergedPoints=100
-
-                    fancyEvan = fancyEvanMaker(
-                        nIntervals, everyNSeeded, bounds)
-
-                    logging.info("Starting simulation with {shock}_{drift}_{radius}_{everySeed}".format(
-                        shock=shocksd, drift=ydrift, radius=radius, everySeed=everyNSeeded))
-                    sim = CoralSimulation(ever_2050_500_flooded, fancyEvan)
-                    sim.run()
-                    sim.toMultiPointFeatureCollection(
-                        "./coral_testing_app/public/coral_tests/coral_{shock}_{drift}_{radius}_{everySeed}_{time}.geojson".format(shock=shocksd, drift=ydrift, radius=radius, everySeed=everyNSeeded, time=time.strftime("%Y%m%d-%H%M%S")))  # save the results

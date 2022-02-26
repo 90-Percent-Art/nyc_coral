@@ -20,7 +20,7 @@ def convert_sea_geojson_to_polygons(gj):
     sea_polygons = []
     for feat in gj['features']:
         try:
-            poly = Polygon(feat['geometry']['coordinates'][0][0])
+            poly = Polygon(feat['geometry']['coordinates'][0][0]) # TODO: this is broken for 2050 data
             metadata = feat['properties']
             sea_polygons.append({'polygon': poly, 'metadata': metadata})
         except Exception as e:
