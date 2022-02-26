@@ -1,3 +1,14 @@
-.Map{
-  width: 1000px;
+.MyMap{
+  z-index: 0;
+}
+
+.Buttons{
+  z-index: 20;
+  position: absolute;
+  margin:0.5rem;
+}
+
+button{
+  display:inline-block;
+  margin:0.5rem;
 }

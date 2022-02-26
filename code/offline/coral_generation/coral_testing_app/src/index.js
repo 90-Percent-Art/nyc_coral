@@ -5,7 +5,7 @@ import App from './App';
 
 ReactDOM.render(
   <React.StrictMode>
-    <App coral_url = "/coral_tests/coral_latest.geojson" />
+    <App coral_url = "coral_progressive_test.geojson" />
   </React.StrictMode>,
   document.getElementById('root')
 );
