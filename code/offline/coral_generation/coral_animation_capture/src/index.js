@@ -15,16 +15,25 @@ const initializeCanvasCapture = (outputName) => {
 
 const initializeMapBox = ({token, style}) => {
     mapboxgl.accessToken = token;
-    return new mapboxgl.Map({
+    newMap = new mapboxgl.Map({
       altitude: 1.5,
       bearing: 0,
       height: 1107,
-      center: [-74.01063177933962, 40.75813025358964],
-      zoom: 11,
+      center: {lng: -73.97113612185217, lat: 40.62869926050584},
+      zoom: 9.910809184890859,
       container: "container", // HTML container id
       style: style, // style URL
       preserveDrawingBuffer: true,
-    })
+      attributionControl: false,
+    });
+
+//_ne: Dl {lng: -73.57670111388728, lat: 40.92738252600151}
+//_sw: Dl {lng: -74.3655711298158, lat: 40.3286741000577}
+
+    newMap.addControl(new mapboxgl.AttributionControl(), "top-left");
+
+    return newMap;
+
 }
 
 // the main render loop

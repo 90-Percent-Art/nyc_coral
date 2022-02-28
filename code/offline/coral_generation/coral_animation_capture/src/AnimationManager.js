@@ -8,7 +8,7 @@ class AnimationManager {
     this.fps = fps;
     this.floodCutpoints = floodCutpoints;
     this.currentFloodLevel = 0; // start at zero
-    this.particleList = this.coralData.features.map((x) => new Particle(x));
+    this.particleList = this.coralData.features.map((x) => new Particle({...x, yoffset:0.1}));
     this.seaLevelPolygonList = this.seaLevelData.features.map(x => new SeaLevelPolygon(x));
     this.initializeMapBoxLayers();
   }
@@ -44,7 +44,7 @@ class AnimationManager {
         "fill-color": "#92b8dd", // blue color fill
         "fill-opacity": ["get", "currentOpacity"]
       },
-    });
+    }, 'point');
 
   }
 
@@ -65,8 +65,8 @@ class AnimationManager {
   update() {
     
     // possibly raise the flood level
-    if(Math.random() < 1/60){
-      if(this.currentFloodLevel < this.floodCutpoints.length){
+    if(Math.random() < 1/240){
+      if(this.currentFloodLevel < this.floodCutpoints.length-1){
         this.currentFloodLevel += 1;
         console.log(this.currentFloodLevel)
       }

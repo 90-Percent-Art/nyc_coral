@@ -7,7 +7,7 @@ class SeaLevelPolygon {
     this.isFlooded = false;
     this.currentOpacity = 0;
 
-    this.maxOpacity = 0.6; // flooded 
+    this.maxOpacity = 0.7; // flooded 
     this.transitionTime = 0.5; 
     this.opacityIncrement = this.maxOpacity/(this.transitionTime*60);
   }
