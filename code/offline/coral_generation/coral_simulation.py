@@ -1,4 +1,6 @@
-'''This script generates the coral positions'''
+'''
+This script contains the CoralSimulation class that knows how to run the coral simulation. 
+'''
 
 # Setup
 import geojson
@@ -10,7 +12,6 @@ import timeit
 import logging
 from random import gauss
 from scipy.spatial import KDTree
-from coral_static_logics import fancyEvanMaker
 
 class Point:
     def __init__(self, xy, bounds, properties):
@@ -124,7 +125,7 @@ class CoralSimulation:
         logging.info("Starting the simulation")
         iters = 0
         start = timeit.default_timer()
-        while iters < self.maxIter and len(self.active_points) > 100:
+        while iters < self.maxIter and len(self.active_points) > self.allowedUnconvergedPoints:
             self.iterate()
             iters += 1
             curr = timeit.default_timer()

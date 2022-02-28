@@ -5,12 +5,13 @@ This file contains one-off scripts and utilities for doing things with the coral
 #!/usr/bin/python3
 import glob
 import os
+import sys
 import shutil
 import time 
 import random 
 import logging
 import geojson
-from coral_static_logics import fancyEvanMaker
+from coral_static_logics import intervalLogicMaker, randomIntervalLogicMaker
 from coral_simulation import CoralSimulation
 
 def scan_directory_and_move_file(
@@ -65,66 +66,73 @@ def grid_search_coral_params(input_path='../../../data/processed/processed_nyc_d
                     sea_floor_level = 40.48
                     allowedUnconvergedPoints = 100
 
-                    fancyEvan = fancyEvanMaker(
+                    intervalLogic = intervalLogicMaker(
                         nIntervals, everyNSeeded, bounds)
 
                     logging.info("Starting simulation with {shock}_{drift}_{radius}_{everySeed}".format(
                         shock=shocksd, drift=ydrift, radius=radius, everySeed=everyNSeeded))
-                    sim = CoralSimulation(ever_2050_500_flooded, fancyEvan)
+                    sim = CoralSimulation(ever_2050_500_flooded, intervalLogic)
                     sim.run()
                     sim.toMultiPointFeatureCollection(os.path.join(output_dir, "{shock}_{drift}_{radius}_{everySeed}_{time}.geojson".format(shock=shocksd, drift=ydrift, radius=radius, everySeed=everyNSeeded, time=time.strftime(" % Y % m % d-%H % M % S"))))
 
-def run_progressive_coral_simulation(): 
-    pass 
 
-def filter_point_list_by_bfe_cutpoint(ptlist, static_bfe_cut_point): 
-    '''
-    Return all the points that *are flooded* at this cut point. I.e. return all the points that
-    have static bfe values greater than the cut point.
-    '''
-    pass
+def run_progressive_coral_simulation(
+    input_path='../../../data/processed/processed_nyc_data_points_200_20220224-154147.geojson', 
+    flood_key='flood_2020_500', 
+    static_logic=intervalLogicMaker(500, 25, [-74.27, -73.6]),
+    shocksd=0.003, ydrift=0.003/6, radius=0.002, 
+    output_path='./coral_animation_capture/data/coral_progressive_test2.geojson'
+    ):
+    """
+    This script runs an iterative progressive coral simulation. This means that it releases the particles in waves
+    based on some set of cutpoints in the static BFE levels. 
+    """
 
-if __name__ == '__main__':
-    input_path = '../../../data/processed/processed_nyc_data_points_200_20220224-154147.geojson'
-    flood_key = 'flood_2020_500'
+    logging.basicConfig(level=logging.INFO, stream=sys.stdout,
+                        format='%(asctime)s %(message)s')
 
     rawdata = geojson.load(open(input_path))
+    ever_flooded = [x for x in rawdata['features']
+                    if x['properties'][flood_key]['in_flood']]
+    never_flooded = [x for x in rawdata['features']
+                    if not x['properties'][flood_key]['in_flood']]
 
-    ever_flooded = [x for x in rawdata['features']if x['properties'][flood_key]['in_flood']]
-    never_flooded = [x for x in rawdata['features'] if not x['properties'][flood_key]['in_flood']]
+    static_bfe_cut_points = [17.0, 15.0, 14.0, 13.0, 12.0, 11.0, 10.0, 0.0]
 
-    # Interesting cut points for the static bfe where significantly more people are affected
-    static_bfe_cut_points = [17.0, 15.0, 14.0,13.0,12.0,11.0,10.0,0.0]
-
-    not_yet_flooded = ever_flooded # for readability
+    not_yet_flooded = ever_flooded  # for readability
 
     # initialize the simulation (nobody is flooded at 24.0)
-    sim = CoralSimulation(filter_point_list_by_bfe_cutpoint(ever_flooded, 24.0), fancyEvanMaker(500, 100, [-74.27, -73.6]))
+    sim = CoralSimulation([], static_logic, allowedUnconvergedPoints=10,
+                          shocksd=0.003, ydrift=0.003/8, radius=0.0025)
 
-    for bfe_cut_point in static_bfe_cut_points: 
-        # 1. get the points that are NEWLY flooded at this cut point 
+    for bfe_cut_point in static_bfe_cut_points:
+        # 1. get the points that are NEWLY flooded at this cut point
         #     --> these are the points that have BFE cut point greater than the current cut point and are in the not yet flooded list
-        # 2. add these points to the simulation 
+        # 2. add these points to the simulation
         # 3. run the simulation
 
-        newly_flooded = [] # the points that are going to be added to the simulation 
-        still_not_flooded = [] # the points that are still not flooded at this cut point
+        logging.info('Flood level: {}'.format(bfe_cut_point))
+
+        newly_flooded = []  # the points that are going to be added to the simulation
+        still_not_flooded = []  # the points that are still not flooded at this cut point
 
         for pt in not_yet_flooded:
             if pt['properties'][flood_key]['flood_polygon_aggregate_metadata']['max_static_bfe'] >= bfe_cut_point:
                 newly_flooded.append(pt)
-            else: 
+            else:
                 still_not_flooded.append(pt)
 
         not_yet_flooded = still_not_flooded
         sim.addNewActivePointsFromFeatureList(newly_flooded)
-        print(len(newly_flooded))
         sim.run()
-    
-    sim.toMultiPointFeatureCollection('./coral_testing_app/public/coral_progressive_test.geojson')
+
+        logging.info('Done with: {}'.format(bfe_cut_point))
+
+    sim.toMultiPointFeatureCollection(output_path)
 
 
-
-
-
-    
+if __name__ == '__main__':
+    run_progressive_coral_simulation(
+        static_logic=intervalLogicMaker(500, 100, [-74.17, -73.7]), 
+        output_path="./coral_animation_capture/data/coral_progressive_test3.geojson"
+    )
