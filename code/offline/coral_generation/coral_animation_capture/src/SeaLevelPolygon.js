@@ -6,9 +6,8 @@ class SeaLevelPolygon {
     this.static_bfe = parseInt(properties.static_bfe);
     this.isFlooded = false;
     this.currentOpacity = 0;
-
     this.maxOpacity = 0.7; // flooded 
-    this.transitionTime = 0.5; 
+    this.transitionTime = 2; 
     this.opacityIncrement = this.maxOpacity/(this.transitionTime*60);
   }
 

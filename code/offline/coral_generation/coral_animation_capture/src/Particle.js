@@ -14,10 +14,13 @@ const vecDistance = (a, b) => {
 }
 
 class Particle {
-  constructor({ geometry, properties, type, yoffset}) {
+  constructor({ geometry, properties, type, velocityScale, yoffset}) {
     this.start = geometry.coordinates[0];
-    this.end = [geometry.coordinates[1][0], geometry.coordinates[1][1]-0.15];
-    this.velocity = getUnitVectorFromStartToEnd(this.start, this.end).map(x=> x*0.00025);
+    this.end = [
+      geometry.coordinates[1][0],
+      geometry.coordinates[1][1] - yoffset,
+    ];
+    this.velocity = getUnitVectorFromStartToEnd(this.start, this.end).map(x=> x*velocityScale);
     this.position = this.start; // what is going to update.
     this.properties = properties;
     this.type = type;
@@ -34,7 +37,7 @@ class Particle {
         coordinates: this.position,
         type: "Point",
       },
-      properties: this.properties,
+      properties: {...this.properties, state: this.state},
       type: "Feature",
     };
   }
@@ -51,7 +54,7 @@ class Particle {
       if (this.homeSeaLevel >= this.seaLevel) {
 
         if(!this.departureTime){
-          this.departureTime = Math.random(0,1)*120+60; // choose a departure time. 
+          this.departureTime = Math.random(0,1)*360+60; // choose a departure time. 
         }else if(this.departureTime <= 1){
           this.state = "FALL";
         }else{

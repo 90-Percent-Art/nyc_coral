@@ -19,16 +19,18 @@ const initializeMapBox = ({token, style}) => {
       altitude: 1.5,
       bearing: 0,
       height: 1107,
-      center: {lng: -73.97113612185217, lat: 40.62869926050584},
-      zoom: 9.910809184890859,
+      // center: { lng: -73.96635127723289, lat: 40.663827839766896 },
+      center: { lng: -73.95130677740997, lat: 40.63110961057512 },
+      zoom: 9.89886394624119,
       container: "container", // HTML container id
       style: style, // style URL
-      preserveDrawingBuffer: true,
+      //preserveDrawingBuffer: true,
       attributionControl: false,
     });
 
-//_ne: Dl {lng: -73.57670111388728, lat: 40.92738252600151}
-//_sw: Dl {lng: -74.3655711298158, lat: 40.3286741000577}
+    // Final bounds are 
+    //_ne: Dl {lng: -73.62394892456157, lat: 40.92304979628307}
+    //_sw: Dl {lng: -74.30875362990382, lat: 40.4035944815125}
 
     newMap.addControl(new mapboxgl.AttributionControl(), "top-left");
 
@@ -46,44 +48,57 @@ function render(){
     requestAnimationFrame(render);
 }
 
-async function main(path_to_coral_data = "data/coral_progressive_test.geojson", path_to_sea_level_data = "data/sea_level_rise_2020s_500.geojson"){
+async function main(
+  path_to_coral_data = "data/coral_progressive_test.geojson",
+  path_to_sea_level_data = "data/sea_level_rise_2020s_500.geojson",
+  path_to_static_data = "data/coral_progressive_static.geojson"
+) {
+  let coralData;
+  let staticData;
+  let seaLevelData;
 
-    let coralData;
-    let seaLevelData;
-
-    await fetch(path_to_coral_data)
+  await fetch(path_to_coral_data)
     .then((res) => res.json())
     .then((d) => {
-        coralData = d;
+      coralData = d;
     });
 
-    await fetch(path_to_sea_level_data)
-      .then((res) => res.json())
-      .then((d) => {
-        seaLevelData = d;
-      });
-
-    mapboxMap = initializeMapBox({
-      token:
-        "pk.eyJ1IjoiamZvc3MxMTciLCJhIjoiY2t6dXJsYncyN2gyZzJ4cHJkMm4yZ2tqNyJ9.BFDHjB7Y9clXwIv5bKJrdA",
-      style: "mapbox://styles/jfoss117/ckzr8kmjs002314lelqt0w83j",
+  await fetch(path_to_static_data)
+    .then((res) => res.json())
+    .then((d) => {
+      staticData = d;
     });
 
-    args = {
-      coralData: coralData,
-      seaLevelData: seaLevelData,
-      mapBoxMap: mapboxMap,
-      animationLen: 5, // in seconds
-      fps: 60,
-      floodCutpoints: [24.0, 17.0, 15.0, 14.0, 13.0, 12.0, 11.0, 10.0, 0.0]
-    };
-
-    mapboxMap.on("load", () => {
-      initializeCanvasCapture("coral_video"); // start canvas capture runnning
-      manager = new AnimationManager(args);
-      render();
+  await fetch(path_to_sea_level_data)
+    .then((res) => res.json())
+    .then((d) => {
+      seaLevelData = d;
     });
 
+  mapboxMap = initializeMapBox({
+    token:
+      "pk.eyJ1IjoiamZvc3MxMTciLCJhIjoiY2t6dXJsYncyN2gyZzJ4cHJkMm4yZ2tqNyJ9.BFDHjB7Y9clXwIv5bKJrdA",
+    //style: "mapbox://styles/jfoss117/ckzr8kmjs002314lelqt0w83j",
+    style: "mapbox://styles/jfoss117/cl08edlw5000k14mgbvcr5u47?fresh=true",
+  });
+
+  args = {
+    coralData: coralData,
+    seaLevelData: seaLevelData,
+    staticData: staticData,
+    mapBoxMap: mapboxMap,
+    animationLen: 5, // in seconds
+    fps: 60,
+    colorInformation: county_level_jeff_current_color_information,
+    floodCutpoints: [24.0, 17.0, 15.0, 14.0, 13.0, 12.0, 11.0, 10.0, 0.0],
+    pRaiseFloodLevel: 1 / 120,
+  };
+
+  mapboxMap.on("load", () => {
+    initializeCanvasCapture("coral_video"); // start canvas capture runnning
+    manager = new AnimationManager(args);
+    //render();
+  });
 }
 
 main();
