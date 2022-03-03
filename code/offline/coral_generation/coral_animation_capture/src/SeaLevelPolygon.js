@@ -1,13 +1,13 @@
 class SeaLevelPolygon {
-  constructor({ type, geometry, properties }) {
+  constructor({ type, geometry, properties, debug}) {
     this.type = type;
     this.geometry = geometry;
     this.properties = properties;
     this.static_bfe = parseInt(properties.static_bfe);
     this.isFlooded = false;
-    this.currentOpacity = 0;
+    this.currentOpacity = debug?0.7:0;
     this.maxOpacity = 0.7; // flooded 
-    this.transitionTime = 2; 
+    this.transitionTime = 2; // seconds
     this.opacityIncrement = this.maxOpacity/(this.transitionTime*60);
   }
 

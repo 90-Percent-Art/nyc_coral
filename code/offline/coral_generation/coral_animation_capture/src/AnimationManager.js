@@ -9,6 +9,8 @@ class AnimationManager {
     animationLen,
     fps,
     colorInformation,
+    perlinOffset,
+    debug,
   }) {
     this.coralData = coralData;
     this.staticData = staticData;    
@@ -19,14 +21,17 @@ class AnimationManager {
     this.colorInformation = colorInformation;
     this.floodCutpoints = floodCutpoints;
     this.pRaiseFloodLevel = pRaiseFloodLevel;
+    this.debug = debug;
     this.currentFloodLevel = 0; // start at zero
+    this.isDone=false;
     this.particleList = this.coralData.features.map(
-      (x) => new Particle({ ...x, yoffset: 0.15, velocityScale:0.00025})
+      (x) => new Particle({ ...x, yoffset: 0.13, velocityScale:0.000125, perlinOffset:perlinOffset, debug:debug})
     );
     this.seaLevelPolygonList = this.seaLevelData.features.map(
-      (x) => new SeaLevelPolygon(x)
+      (x) => new SeaLevelPolygon({...x, debug:debug})
     );
     this.initializeMapBoxLayers();
+    this.timeSinceLastFloodRaise = 0;
   }
 
   // initializes the mapboxpoint layer
@@ -45,12 +50,12 @@ class AnimationManager {
           "match",
           ["get", "state"],
           "HOME",
-          1.2,
+          this.colorInformation.radius_info.radius_small,
           "FALL",
-          1.7,
+          this.colorInformation.radius_info.radius_large,
           "CORAL",
-          1.7,
-          1.7,
+          this.colorInformation.radius_info.radius_large,
+          this.colorInformation.radius_info.radius_large,
         ],
         "circle-color": [
           "match",
@@ -101,7 +106,7 @@ class AnimationManager {
         source: "static",
         type: "circle",
         paint: {
-          "circle-radius": 1.2,
+          "circle-radius": this.colorInformation.radius_info.radius_small,
           "circle-color": this.colorInformation.color_expression_desaturated,
           "circle-opacity": this.colorInformation.static_opacity,
         },
@@ -122,6 +127,7 @@ class AnimationManager {
         paint: {
           "fill-color": this.colorInformation.water_color, // blue color fill
           "fill-opacity": ["get", "currentOpacity"],
+          "fill-outline-color": "rgba(255, 255, 0, 0)", // hack for no border... 
         },
       },
       "point"
@@ -142,13 +148,20 @@ class AnimationManager {
     };
   }
 
+  setDone(){
+    this.isDone=true;
+  }
+
   update() {
     // possibly raise the flood level
-    if (Math.random() < this.pRaiseFloodLevel) {
+    if (this.timeSinceLastFloodRaise > 600 || (Math.random() < this.pRaiseFloodLevel) && this.timeSinceLastFloodRaise > 180) {
       if (this.currentFloodLevel < this.floodCutpoints.length - 1) {
         this.currentFloodLevel += 1;
         console.log(this.currentFloodLevel);
       }
+      this.timeSinceLastFloodRaise = 0;
+    } else{
+      this.timeSinceLastFloodRaise+=1;
     }
 
     // update all the particles.
@@ -169,7 +182,11 @@ class AnimationManager {
   }
 
   updateDraw() {
-    this.update();
-    this.draw();
+    if(!this.isDone){
+      this.update();
+      this.draw();
+    }else{
+
+    }
   }
 }
