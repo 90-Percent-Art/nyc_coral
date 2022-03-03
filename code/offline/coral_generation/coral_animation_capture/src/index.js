@@ -63,11 +63,11 @@ function render(){
 // # coral_progressive_few_interval
 // coral_progressive_few_interval3 -- funny two curving toward one another (next?)
 // coral_progressive_few_interval4 - fine normal 
-// coral_progressive_few_interval6 - DRAWING
+// coral_progressive_few_interval6 - DRAWINGn - was run on dark theme
 // coral_progressive_random_intervals2 -- good number of intervals with some spacing
 // coral_progressive_random_intervals3 - handful of tall guyz
 async function main(
-  path_to_coral_data = "data/coral_progressive_few_interval6.geojson", // this one has been run dark theme 
+  path_to_coral_data = "data/coral_progressive_few_interval4.geojson", // this one has been run dark theme
   path_to_sea_level_data = "data/sea_level_rise_2020s_500.geojson",
   path_to_static_data = "data/coral_progressive_static.geojson"
 ) {
@@ -110,7 +110,7 @@ async function main(
     mapBoxMap: mapboxMap,
     animationLen: 5, // in seconds
     fps: 60,
-    colorInformation: county_level_jeff_current_color_information,
+    colorInformation: county_level_jeff_dark_theme_color_information,
     floodCutpoints: [24.0, 17.0, 15.0, 14.0, 13.0, 12.0, 11.0, 10.0, 0.0],
     pRaiseFloodLevel: 1 / 480, // 1/120
     perlinOffset: 5.5,

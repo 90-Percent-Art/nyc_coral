@@ -59,6 +59,48 @@ let county_level_jeff_current_color_information = {
   static_opacity: 0.7,
 };
 
+let county_level_jeff_dark_theme_color_information = {
+  water_color: "#3a414b",
+  color_expression: [
+    "match",
+    ["get", "county"],
+    "Queens County",
+    "#FA5C5C",
+    "Bronx County",
+    "#F7C4BC",
+    "New York County",
+    "#ff7162",
+    "Richmond County",
+    "#E6AE72",
+    "Kings County",
+    "#8869A5",
+    "#ccc",
+  ],
+  color_expression_desaturated: [
+    "match",
+    ["get", "county"],
+    "Queens County",
+    "#B48383",
+    "Bronx County",
+    "#D5948A",
+    "New York County",
+    "#BA8C86",
+    "Richmond County",
+    "#AE9B89",
+    "Kings County",
+    //"#665F6D",
+    "#66616B",
+    "#ccc",
+  ],
+  color_expression_desaturated_alt: "#A4ADB5",
+  radius_info: {
+    radius_large: 2.15,
+    radius_small: 1.8,
+  },
+  coral_opacity: 1,
+  static_opacity: 0.7,
+};
+
 let county_level_evan_proposal = [
   "match",
   ["get", "county"],

@@ -127,7 +127,7 @@ class AnimationManager {
         paint: {
           "fill-color": this.colorInformation.water_color, // blue color fill
           "fill-opacity": ["get", "currentOpacity"],
-          "fill-outline-color": "rgba(255, 255, 0, 0)", // hack for no border... 
+          "fill-outline-color": "rgba(58, 65, 75, 0.5)", // hack for no border...
         },
       },
       "point"
